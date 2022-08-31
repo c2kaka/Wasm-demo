@@ -1,4 +1,4 @@
-import { calcFPS, flipKernel, jsConvertFilter } from './dip';
+import { calcFPS, flipKernel, jsConvertFilter, loadWasm, wasmConvertFilter } from './dip';
 import './style.css'
 
 const STATUS = ['NONE', 'JS', 'WASM'] as const;
@@ -28,7 +28,7 @@ if (promise !== undefined) {
   promise.catch(() => console.error('video can not play'))
 }
 
-video?.addEventListener('loadeddata', () => {
+video.addEventListener('loadeddata', () => {
   canvas?.setAttribute('width', `${video?.videoWidth}`);
   canvas?.setAttribute('height', `${video?.videoHeight}`);
 
@@ -37,6 +37,9 @@ video?.addEventListener('loadeddata', () => {
 
   draw(context2d, video);
 });
+
+// wasm filter
+let instance = await loadWasm();
 
 function draw(context2d: CanvasRenderingContext2D, video: HTMLVideoElement) {
   const timeStart = performance.now();
@@ -47,6 +50,10 @@ function draw(context2d: CanvasRenderingContext2D, video: HTMLVideoElement) {
   switch (globalStatus) {
     case 'JS':
       pixels.data.set(jsConvertFilter(pixels.data, clientX, clientY, KERNEL));
+      break;
+
+    case 'WASM':
+      pixels.data.set(wasmConvertFilter(instance, KERNEL, pixels.data, clientX, clientY)());
       break;
 
     default:

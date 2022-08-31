@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "compile:wasm": "./wasm/bin.sh",
+    "compile-debug:wasm": "./wasm/debug.sh"
   },
   "devDependencies": {
     "typescript": "^4.6.4",

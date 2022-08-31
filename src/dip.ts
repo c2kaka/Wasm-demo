@@ -14,7 +14,6 @@ export function calcFPS(vector: number[]): string {
     return (1000 / averageTime).toFixed(2);
 }
 
-
 // 矩阵翻转函数；
 export function flipKernel(kernel: number[][]) {
     const h = kernel.length;
@@ -38,7 +37,6 @@ export function flipKernel(kernel: number[][]) {
     }
     return kernel;
 }
-
 
 export function jsConvertFilter(data: Uint8ClampedArray, width: number, height: number, kernel: number[][]) {
     const divisor = 4;  // 分量调节参数；
@@ -68,4 +66,43 @@ export function jsConvertFilter(data: Uint8ClampedArray, width: number, height: 
         }
     }
     return data;
+}
+
+export async function loadWasm() {
+    let { instance } = await WebAssembly.instantiateStreaming(
+        fetch("./wasm/dip.wasm")
+    );
+
+    return instance.exports;
+}
+
+export function wasmConvertFilter(instance: any, kernel: number[][], pixelData: Uint8ClampedArray, width: number, height: number) {
+    let {
+        cppConvFilter,
+        cppGetkernelPtr,
+        cppGetDataPtr,
+        memory,
+    } = instance;
+
+    const dataOffset = cppGetDataPtr();
+    const kernOffset = cppGetkernelPtr();
+
+    const flatKernel = kernel.reduce((acc, cur) => acc.concat(cur), []);
+    let Uint8View = new Uint8Array(memory.buffer);
+    let Int8View = new Int8Array(memory.buffer);
+    Int8View.set(flatKernel, kernOffset);
+
+    const filterWasm = () => {
+        const arLen = pixelData.length;
+
+        Uint8View.set(pixelData, dataOffset);
+
+        // core.
+        cppConvFilter(width, height, 4);
+
+        // retrieve data.
+        return Uint8View.subarray(dataOffset, dataOffset + arLen);
+    }
+
+    return filterWasm;
 }
