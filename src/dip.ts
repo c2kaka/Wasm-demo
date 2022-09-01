@@ -70,7 +70,7 @@ export function jsConvertFilter(data: Uint8ClampedArray, width: number, height: 
 
 export async function loadWasm() {
     let { instance } = await WebAssembly.instantiateStreaming(
-        fetch("./wasm/dip.wasm")
+        fetch("/dip.wasm")
     );
 
     return instance.exports;
